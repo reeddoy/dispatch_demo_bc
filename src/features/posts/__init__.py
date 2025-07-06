@@ -47,22 +47,61 @@ async def posts(
         sort="created_timestamp",
         descending=True,
     )
-    return PostsResponse(
+    # Collect all user_ids needed (authors, likers, commenters)
+    user_ids = set()
+    for post in posts:
+        user_ids.add(post.user_id)
+        user_ids.update(post.likes)
+        for comment_id in post.comments_ids:
+            comment = Comments.get_child(comment_id)
+            if comment:
+                user_ids.add(comment.user_id)
+
+    users = {u.id: u for u in Users.find({"id": {"$in": list(user_ids)}})}
+
+    def user_info(user_id):
+        user = users.get(user_id)
+        if user:
+            return dict(
+                id=user.id,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                user_name=user.user_name,
+                email=user.email,
+            )
+        return None
+
+    post_models = []
+    for post in posts:
+        # Likes users
+        likes_users = [user_info(uid) for uid in post.likes if user_info(uid)]
+        # Comments with user info
+        comments = []
+        for comment_id in post.comments_ids:
+            comment = Comments.get_child(comment_id)
+            if comment:
+                commenter = user_info(comment.user_id)
+                comments.append(dict(
+                    id=comment.id,
+                    content=comment.content,
+                    user=commenter,
+                    created_timestamp=comment.created_timestamp,
+                    files=comment.files,
+                ))
+        post_models.append(dict(
+            content=post.content,
+            id=post.id,
+            created_timestamp=post.created_timestamp,
+            author=user_info(post.user_id),
+            likes=likes_users,
+            comments=comments,
+            files=post.files,
+        ))
+    return dict(
         detail="Posts returned successfully.",
         pages=pages,
         page=page,
-        posts=[
-            PostModel(
-                content=post.content,
-                id=post.id,
-                created_timestamp=post.created_timestamp,
-                user_id=post.user_id,
-                likes=len(post.likes),
-                comments=len(post.comments_ids),
-                files=post.files,
-            )
-            for post in posts
-        ],
+        posts=post_models,
     )
 
 
@@ -98,22 +137,61 @@ async def posts(
         sort="created_timestamp",
         descending=True,
     )
-    return PostsResponse(
+    # Collect all user_ids needed (authors, likers, commenters)
+    user_ids = set()
+    for post in posts:
+        user_ids.add(post.user_id)
+        user_ids.update(post.likes)
+        for comment_id in post.comments_ids:
+            comment = Comments.get_child(comment_id)
+            if comment:
+                user_ids.add(comment.user_id)
+
+    users = {u.id: u for u in Users.find({"id": {"$in": list(user_ids)}})}
+
+    def user_info(user_id):
+        user = users.get(user_id)
+        if user:
+            return dict(
+                id=user.id,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                user_name=user.user_name,
+                email=user.email,
+            )
+        return None
+
+    post_models = []
+    for post in posts:
+        # Likes users
+        likes_users = [user_info(uid) for uid in post.likes if user_info(uid)]
+        # Comments with user info
+        comments = []
+        for comment_id in post.comments_ids:
+            comment = Comments.get_child(comment_id)
+            if comment:
+                commenter = user_info(comment.user_id)
+                comments.append(dict(
+                    id=comment.id,
+                    content=comment.content,
+                    user=commenter,
+                    created_timestamp=comment.created_timestamp,
+                    files=comment.files,
+                ))
+        post_models.append(dict(
+            content=post.content,
+            id=post.id,
+            created_timestamp=post.created_timestamp,
+            author=user_info(post.user_id),
+            likes=likes_users,
+            comments=comments,
+            files=post.files,
+        ))
+    return dict(
         detail="Posts returned successfully.",
         pages=pages,
         page=page,
-        posts=[
-            PostModel(
-                content=post.content,
-                id=post.id,
-                created_timestamp=post.created_timestamp,
-                user_id=post.user_id,
-                likes=len(post.likes),
-                comments=len(post.comments_ids),
-                files=post.files,
-            )
-            for post in posts
-        ],
+        posts=post_models,
     )
 
 
@@ -145,15 +223,51 @@ async def post(
 ) -> PostResponse:
     post: Post
     if post := Posts.get_child(post_id):
-        return PostResponse(
+        # Gather all user info
+        author = Users.get_child(post.user_id)
+        author_info = dict(
+            id=author.id,
+            first_name=author.first_name,
+            last_name=author.last_name,
+            user_name=author.user_name,
+            email=author.email,
+        ) if author else None
+        likes_users = [Users.get_child(uid) for uid in post.likes]
+        likes_users = [dict(
+            id=u.id,
+            first_name=u.first_name,
+            last_name=u.last_name,
+            user_name=u.user_name,
+            email=u.email,
+        ) for u in likes_users if u]
+        comments = []
+        for comment_id in post.comments_ids:
+            comment = Comments.get_child(comment_id)
+            if comment:
+                commenter = Users.get_child(comment.user_id)
+                commenter_info = dict(
+                    id=commenter.id,
+                    first_name=commenter.first_name,
+                    last_name=commenter.last_name,
+                    user_name=commenter.user_name,
+                    email=commenter.email,
+                ) if commenter else None
+                comments.append(dict(
+                    id=comment.id,
+                    content=comment.content,
+                    user=commenter_info,
+                    created_timestamp=comment.created_timestamp,
+                    files=comment.files,
+                ))
+        return dict(
             detail="Posts returned successfully.",
-            post=PostModel(
+            post=dict(
                 content=post.content,
                 id=post.id,
-                user_id=post.user_id,
-                likes=len(post.likes),
+                author=author_info,
+                likes=likes_users,
                 created_timestamp=post.created_timestamp,
-                comments=len(post.comments_ids),
+                comments=comments,
                 files=post.files,
             ),
         )
