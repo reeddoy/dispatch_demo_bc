@@ -22,7 +22,7 @@ email_router = APIRouter(prefix="/email", tags=["Admin"])
         },
     },
 )
-async def email(request: EmailRequest, _: Session = get_session) -> Response:
+async def email(request: EmailRequest) -> Response:
     email = request.email
     name = request.name
     subject = request.subject
