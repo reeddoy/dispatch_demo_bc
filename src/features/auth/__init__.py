@@ -6,6 +6,7 @@ from ...shared.utils.validators import Validator
 from ...shared.utils.commons import hash_data, verify_hash
 from ...shared.services.routers.utils import *
 from ...shared.services.sessions import *
+from ...shared.services.mail import *
 from .api_models import *
 
 
@@ -275,12 +276,18 @@ async def send_otp(session: Session = get_session) -> OTPResponse:
             # session.user.otp = otp.otp
             # session.user.save()
 
+            Mail.send_otp(
+                user.email,
+                f"{user.first_name} {user.last_name}",
+                user.otp,
+            )
+
             return dict(
                 data=dict(
-                    otp=user.otp,
+                    # otp=user.otp,
                     # timeout=otp.timeout,
                 ),
-                detail="OTP returned.",
+                detail="OTP sent to email.",
             )
 
         except Exception as e:

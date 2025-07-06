@@ -86,7 +86,7 @@ class RefreshTokenRequest(BaseModel):
 
 class OTPData(BaseModel):
     timeout: int = 0
-    otp: int
+    otp: int = 0
 
 
 class OTPResponse(Response):
