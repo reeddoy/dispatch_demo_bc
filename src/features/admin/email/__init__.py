@@ -35,5 +35,6 @@ async def email(request: EmailRequest, _: Session = get_session) -> Response:
         subject=subject,
         body=body,
         attachments=attachments,
+        as_html=True,
     )
     return Response(detail="Email sent successfully.")

@@ -4,7 +4,7 @@ from ...utils.base import Child, modifier
 from ....constants.config import *
 from ....models import User
 from . import Mail
-
+import time
 
 class OTP(Child):
     def __init__(self, user: User):
@@ -71,6 +71,8 @@ class OTP(Child):
             if get_timestamp() - self.last_otp_generated_time >= OTP_TIMEOUT:
                 self.otp = 0
                 LOGGER.info(f"{self.user}: OTP revoked")
+                break
+            time.sleep(1)
 
 
 class ResetOTP(OTP):

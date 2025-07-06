@@ -182,36 +182,44 @@ class Sessions(SingletonManager):
                 return True
         return False
 
-    def clear_reset_passwords(self):
+
+    def clear_reset_passwords_once(self):
+        reset_otps = list(self.reset_otps.values())
+        for reset_otp in reset_otps:
+            if not reset_otp.valid:
+                del self.reset_otps[reset_otp.id]
+
+    def start_periodic_reset_password_cleanup(self, interval=60):
         if self.clearing_reset_passwords:
             return
-
         self.clearing_reset_passwords = True
+        def cleanup():
+            while self.alive and self.clearing_reset_passwords:
+                self.clear_reset_passwords_once()
+                time.sleep(interval)
+            self.clearing_reset_passwords = False
+        run_on_thread(cleanup)
 
-        while self.alive and self.reset_otps:
-            reset_otps = list(self.reset_otps.values())
-            for reset_otp in reset_otps:
-                if not reset_otp.valid:
-                    del self.reset_otps[reset_otp.id]
+    def clear_sessions_once(self):
+        sessions: list[Session] = self.values()
+        for session in sessions:
+            if not session.valid:
+                session.kill()
+                LOGGER.info(f"Session Timeout :: {session.user.email}")
+                self.remove_child(session)
 
-        self.clearing_reset_passwords = False
-
-    def clear_sessions(self):
+    def start_periodic_session_cleanup(self, interval=60):
         if self.started:
             return
-
-        LOGGER.info(f"Started validating {self.__class__.__name__}")
-
-        while self.alive:
-            sessions: list[Session] = self.values()
-            for session in sessions:
-                if not session.valid:
-                    session.kill()
-                    LOGGER.info(f"Session Timeout :: {session.user.email}")
-                    self.remove_child(session)
-
-        self.started = False
-        LOGGER.info(f"Ended validating {self.__class__.__name__}\n")
+        self.started = True
+        LOGGER.info(f"Started periodic validating {self.__class__.__name__}")
+        def cleanup():
+            while self.alive and self.started:
+                self.clear_sessions_once()
+                time.sleep(interval)
+            self.started = False
+            LOGGER.info(f"Ended periodic validating {self.__class__.__name__}\n")
+        run_on_thread(cleanup)
 
     def kill(self):
         reset_otps = self.reset_otps.values()

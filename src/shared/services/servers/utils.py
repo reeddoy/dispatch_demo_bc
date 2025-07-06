@@ -27,9 +27,12 @@ def admin_users():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
     run_on_thread(Mail.restart)
     admin_users()
-    run_on_thread(Sessions.clear_sessions)
+    # Start periodic session and reset password cleanup
+    Sessions.start_periodic_session_cleanup()
+    Sessions.start_periodic_reset_password_cleanup()
 
     yield
 
