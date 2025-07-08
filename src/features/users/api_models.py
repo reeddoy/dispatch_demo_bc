@@ -2,11 +2,11 @@ from ..auth import *
 
 
 class GetUserProfileResponse(Response):
-    profile: Profile
+    profile: ProfileNoPassword
 
 
 class UsersResponse(Response):
-    users: list[Profile]
+    users: list[ProfileNoPassword]
 
 
 class SavedLoads(Response):

@@ -59,6 +59,43 @@ class Profile(SignupRequest):
     image: str
     subscription_on: bool
 
+class ProfileNoPassword(BaseModel):
+    verified: bool
+    id: str
+    created_timestamp: int
+    saved_loads: list[str]
+    saved_trucks: list[str]
+    favourites: list[str]
+    membership: str
+    contacts: Optional[list]
+    image: str
+    subscription_on: bool
+
+    user_type: UserType
+    first_name: str
+    last_name: str
+    company_name: str
+    email: str
+    address: str
+    phone_number: str
+
+    # sign 2
+    user_name: str
+    website: str
+    service_areas: list[str]
+    dispatche_fees: list[str]
+    accept_new_authorities: bool
+
+    # sign 3
+    ein: str  # XX-XXXXXXX
+    mc: str
+    dot: str
+    offered_services: list[str]
+    equipment_types: list[str]
+
+    # sign 4
+    description: str
+    referral: Optional[str] = ""
 
 class ContinueSignupRequest(BaseModel):
     user_type: UserType
