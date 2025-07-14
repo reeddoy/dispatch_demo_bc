@@ -94,6 +94,10 @@ class ResetOTP(OTP):
             LOGGER.info(f"{self.user}: RESET OTP generated :: {sent}")
             return sent
 
+    @property
+    def valid(self) -> bool:
+        return (get_timestamp() - self.modified_timestamp) <= OTP_TIMEOUT
+    
     def verify(self, otp: int):
         return otp == self.otp
 

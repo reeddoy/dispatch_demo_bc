@@ -453,11 +453,19 @@ def forgot_password(request: ForgotPasswordRequest) -> OTPResponse:
 
         else:
             reset_otp: ResetOTP = Sessions.set_reset_password(email)
+            
             if reset_otp:
                 reset_otp.generate()
+
+                Mail.send_reset_otp(
+                    email,
+                    f"{reset_otp.user.first_name} {reset_otp.user.last_name}",
+                    reset_otp.otp,
+                )
+
                 return dict(
                     data=dict(
-                        otp=reset_otp.otp,
+                        # otp=reset_otp.otp,
                         # timeout=reset_otp.timeout,
                     ),
                     detail=f"Reset OTP sent to `{email}`",
