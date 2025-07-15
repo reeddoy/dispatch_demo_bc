@@ -93,9 +93,15 @@ class Client(Child):
         self.otp.kill()
         super().kill()
 
+    # async def emit(self, callback):
+    #     for sid in self.sids:
+    #         return await callback(sid)
     async def emit(self, callback):
+        results = []
         for sid in self.sids:
-            return await callback(sid)
+            result = await callback(sid)
+            results.append(result)
+        return results
 
 
 class Sessions(SingletonManager):
